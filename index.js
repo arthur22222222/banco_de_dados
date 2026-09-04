@@ -62,6 +62,26 @@ app.post("/clientes", async (req, res) => {
     }
 })
 
+app.post("/login", (req,res) => {
+    try{
+        const user = req.body
+        const resultado = await db.pool.query(
+            "SELECT email, senha FROM cliente WHERE email = ?", [user.email]
+        )
+        const dados_bd = resultado[0][0]
+        if(!dados_bd) {
+            return res.status(401).json({msg: "Email não cadastrado!"})
+        }
+        if(user.senha != dados_bd.senha) {
+            return res.status(200).json({msg: "Credencia inválidas!"})
+        }
+        return res.status(200).json({msg:"login realizado com sucesso!"})
+
+    } catch (error) {
+        res.status(500).json({erro: error.message})
+    }
+})
+
 app.get("/clientes", async (req, res) => {
     try {
         const [clientes] = await db.pool.query(consultaClientes)
