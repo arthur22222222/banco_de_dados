@@ -1,6 +1,11 @@
 const express = require("express")
 const bcrypt = require("bcrypt")
 const db = require("./db")
+const jwt = require("jsonwenbtoken")
+const dotenv = require("dotenv")
+dotenv.config()
+const cors = require("cors")
+app.use(cors())
 
 const app = express()
 const porta = 3000
@@ -72,10 +77,18 @@ app.post("/login", (req,res) => {
         if(!dados_bd) {
             return res.status(401).json({msg: "Email não cadastrado!"})
         }
-        if(user.senha != dados_bd.senha) {
-            return res.status(200).json({msg: "Credencia inválidas!"})
+        const senha_valida = await bcrypt.compare(user.senha, dados_bd.senha)
+
+        if(!senha_valida) {
+            return res.status(401).json({msg: "Credencia inválidas!"})
         }
-        return res.status(200).json({msg:"login realizado com sucesso!"})
+
+        const payload = {
+            id: dados_bd.id
+            email: dados_bd.email
+        }
+        const token = jwt.sign(payload, process.env.JWT_SECRET, {expiresIn: '1m'})
+        return res.status(200).json({nome: dados_bd.nome, token: token})
 
     } catch (error) {
         res.status(500).json({erro: error.message})
